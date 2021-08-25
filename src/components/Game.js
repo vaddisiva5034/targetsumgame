@@ -3,25 +3,26 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { RandomNumber } from "./RandomNumber";
 import * as Progress from "react-native-progress";
 
-export const Game = ({ randomNumberCount, setEndGame }) => {
+const progressTimeLimit = 20;
+export const Game = ({ randomNumberCount, isWon }) => {
   const [randomNumbers] = useState(
     Array.from({ length: randomNumberCount }).map(
-      () => 1 + Math.floor(10 * Math.random())
+      () => 1 + Math.floor(10 * Math.random() * (randomNumberCount - 5))
     )
   );
-  const [progress, setProgress] = useState(1000);
+  const [progress, setProgress] = useState(progressTimeLimit);
   const [sum, setSum] = useState(0);
+
   const [targetSum] = useState(
-    randomNumbers
-      .slice(0, randomNumberCount - 2)
-      .reduce((acc, randomNumber) => acc + randomNumber, 0)
+    randomNumbers.reduce(
+      (acc, randomNumber) => (Math.random() > 0.5 ? acc + randomNumber : acc),
+      0
+    ) || randomNumbers[3]
   );
 
   useEffect(() => {
     const timeOut = setInterval(() => {
       setProgress((pre) => pre - 1);
-      //Alert.alert("time up");
-      // setEndGame(true);
     }, 100);
     return () => {
       clearTimeout(timeOut);
@@ -30,29 +31,30 @@ export const Game = ({ randomNumberCount, setEndGame }) => {
 
   useEffect(() => {
     if (sum === targetSum) {
-      Alert.alert("you won");
-      setEndGame(true);
+      isWon(true);
     } else if (sum > targetSum) {
       Alert.alert("you lost");
-      setEndGame(true);
+      isWon(false);
     }
   }, [sum]);
+
   const handlePress = (number) => {
     setSum((preSum) => preSum + number);
   };
+
   useEffect(() => {
     if (progress == 0) {
       Alert.alert("time up");
-      setEndGame(true);
+      isWon(false);
     }
   }, [progress]);
   return (
     <View>
       <Progress.Bar
-        progress={progress / 1000}
+        progress={progress / progressTimeLimit}
         width={350}
         height={10}
-        color={progress / 1000 < 0.3 ? "red" : "green"}
+        color={progress / progressTimeLimit < 0.3 ? "red" : "green"}
       />
       <Text style={styles.target}>{targetSum}</Text>
 
